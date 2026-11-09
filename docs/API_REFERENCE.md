@@ -287,3 +287,4 @@ api_access_token: <CHATWOOT_API_ACCESS_TOKEN>
 }
 ```
 *`message_type`: `incoming` (from WhatsApp user), `outgoing` (agent/AI reply).*
+

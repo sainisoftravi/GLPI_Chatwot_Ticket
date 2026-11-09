@@ -232,3 +232,4 @@ docker compose restart <service_name>
 git pull origin main
 docker compose up -d --build
 ```
+

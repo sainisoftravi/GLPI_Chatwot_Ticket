@@ -165,3 +165,4 @@ All containers reside on a shared internal Docker bridge network (`it-network`).
 - **Written in Python 3.11 with FastAPI and HTTPX AsyncClient**.
 - **Deduplication Engine**: In-memory ring buffer preventing duplicate ticket creation when webhooks retry.
 - **State Transformer**: Maps unstructured WhatsApp text into structured ITIL Ticket payloads with Urgency, Category, Requester metadata, and Kanban sub-tasks.
+
