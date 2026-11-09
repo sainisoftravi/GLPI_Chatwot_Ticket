@@ -1,0 +1,20 @@
+# Environment variables
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+
+# Docker volumes / persistence
+data/
+*.log
+
+# OS
+Thumbs.db
+.DS_Store

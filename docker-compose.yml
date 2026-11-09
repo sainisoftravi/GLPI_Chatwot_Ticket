@@ -1,0 +1,145 @@
+version: '3.8'
+
+networks:
+  it-network:
+    driver: bridge
+
+volumes:
+  glpi_db_data:
+  glpi_data:
+  chatwoot_pg_data:
+  chatwoot_redis_data:
+  chatwoot_storage:
+
+services:
+  # ========================================================
+  # 1. GLPI ITSM Stack (Ticket & Task Management Core)
+  # ========================================================
+  glpi-db:
+    image: mariadb:10.11
+    container_name: glpi-mariadb
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD:-glpi_root_secure_pwd_123}
+      MYSQL_DATABASE: ${MARIADB_DATABASE:-glpidb}
+      MYSQL_USER: ${MARIADB_USER:-glpi}
+      MYSQL_PASSWORD: ${MARIADB_PASSWORD:-glpi_secure_pwd_123}
+    volumes:
+      - glpi_db_data:/var/lib/mysql
+    networks:
+      - it-network
+
+  glpi:
+    image: diouxx/glpi:latest
+    container_name: glpi-app
+    restart: always
+    depends_on:
+      - glpi-db
+    ports:
+      - "${GLPI_PORT:-8080}:80"
+    environment:
+      TIMEZONE: ${TIMEZONE:-Asia/Kolkata}
+    volumes:
+      - glpi_data:/var/www/html/glpi
+    networks:
+      - it-network
+
+  # ========================================================
+  # 2. Chatwoot Stack (Live Chat, WhatsApp & AI Engine)
+  # ========================================================
+  chatwoot-postgres:
+    image: postgres:15-alpine
+    container_name: chatwoot-postgres
+    restart: always
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-chatwoot}
+      POSTGRES_USER: ${POSTGRES_USER:-chatwoot}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-chatwoot_secure_pwd_123}
+    volumes:
+      - chatwoot_pg_data:/var/lib/postgresql/data
+    networks:
+      - it-network
+
+  chatwoot-redis:
+    image: redis:alpine
+    container_name: chatwoot-redis
+    restart: always
+    volumes:
+      - chatwoot_redis_data:/data
+    networks:
+      - it-network
+
+  chatwoot-web:
+    image: chatwoot/chatwoot:latest
+    container_name: chatwoot-web
+    restart: always
+    depends_on:
+      - chatwoot-postgres
+      - chatwoot-redis
+    ports:
+      - "${CHATWOOT_PORT:-3000}:3000"
+    environment:
+      - FRONTEND_URL=${FRONTEND_URL:-http://localhost:3000}
+      - SECRET_KEY_BASE=${SECRET_KEY_BASE:-4a87b8f3e2910c73e1f0e498d28a1c6a7e0f3b4c5d6e7f8a9b0c1d2e3f4a5b6c}
+      - DATABASE_URL=postgres://${POSTGRES_USER:-chatwoot}:${POSTGRES_PASSWORD:-chatwoot_secure_pwd_123}@chatwoot-postgres:5432/${POSTGRES_DB:-chatwoot}
+      - REDIS_URL=redis://chatwoot-redis:6379
+      - NODE_ENV=production
+      - RAILS_ENV=production
+      - INSTALLATION_ENV=docker
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - OPENAI_MODEL=${OPENAI_MODEL:-gpt-4o-mini}
+    volumes:
+      - chatwoot_storage:/app/storage
+    command: ["bundle", "exec", "rails", "s", "-p", "3000", "-b", "0.0.0.0"]
+    networks:
+      - it-network
+
+  chatwoot-worker:
+    image: chatwoot/chatwoot:latest
+    container_name: chatwoot-worker
+    restart: always
+    depends_on:
+      - chatwoot-postgres
+      - chatwoot-redis
+    environment:
+      - FRONTEND_URL=${FRONTEND_URL:-http://localhost:3000}
+      - SECRET_KEY_BASE=${SECRET_KEY_BASE:-4a87b8f3e2910c73e1f0e498d28a1c6a7e0f3b4c5d6e7f8a9b0c1d2e3f4a5b6c}
+      - DATABASE_URL=postgres://${POSTGRES_USER:-chatwoot}:${POSTGRES_PASSWORD:-chatwoot_secure_pwd_123}@chatwoot-postgres:5432/${POSTGRES_DB:-chatwoot}
+      - REDIS_URL=redis://chatwoot-redis:6379
+      - NODE_ENV=production
+      - RAILS_ENV=production
+      - INSTALLATION_ENV=docker
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+    volumes:
+      - chatwoot_storage:/app/storage
+    command: ["bundle", "exec", "sidekiq", "-C", "config/sidekiq.yml"]
+    networks:
+      - it-network
+
+  # ========================================================
+  # 3. Integration Bridge (Chatwoot <-> GLPI Sync Engine)
+  # ========================================================
+  bridge:
+    build:
+      context: ./bridge
+      dockerfile: Dockerfile
+    container_name: it-integration-bridge
+    restart: always
+    ports:
+      - "${BRIDGE_PORT:-5000}:5000"
+    environment:
+      - GLPI_BASE_URL=http://glpi:80
+      - GLPI_APP_TOKEN=${GLPI_APP_TOKEN:-}
+      - GLPI_USER_TOKEN=${GLPI_USER_TOKEN:-}
+      - PUBLIC_GLPI_URL=${GLPI_BASE_URL:-http://localhost:8080}
+      - CHATWOOT_BASE_URL=http://chatwoot-web:3000
+      - CHATWOOT_API_ACCESS_TOKEN=${CHATWOOT_API_ACCESS_TOKEN:-}
+      - CHATWOOT_ACCOUNT_ID=${CHATWOOT_ACCOUNT_ID:-1}
+      - BRIDGE_SECRET_TOKEN=${BRIDGE_SECRET_TOKEN:-secure_bridge_webhook_token_998877}
+      - AUTO_CREATE_TICKET_ON_LABEL=${AUTO_CREATE_TICKET_ON_LABEL:-ticket-needed}
+      - DEFAULT_TICKET_CATEGORY_ID=${DEFAULT_TICKET_CATEGORY_ID:-1}
+    depends_on:
+      - glpi
+      - chatwoot-web
+    networks:
+      - it-network
