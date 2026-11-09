@@ -17,6 +17,7 @@ An enterprise-grade, open-source stack combining:
 | **[System Architecture & Data Flow](docs/ARCHITECTURE.md)** | Architectural blueprints, sequence diagrams, network topology, and component deep dives. |
 | **[API Reference & Webhooks](docs/API_REFERENCE.md)** | Full REST API endpoints, request/response JSON schemas, and webhook specs. |
 | **[OpenWA WhatsApp QR Guide](docs/OPENWA_SETUP_GUIDE.md)** | How to link any WhatsApp phone number in 10 seconds via QR code. |
+| **[GLPI Plugins & Permissions Guide](docs/GLPI_PLUGINS_GUIDE.md)** | How to install, fix permissions, and manage GLPI plugins in Docker containers. |
 | **[Captain AI IT Support Prompt](docs/CAPTAIN_AI_PROMPT.md)** | Production system prompt for Tier-1 IT Support triage in Chatwoot. |
 | **[Meta WhatsApp Templates](docs/META_WHATSAPP_TEMPLATES.md)** | Pre-written templates if you ever choose to migrate to official Meta Cloud API. |
 
