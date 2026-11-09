@@ -148,3 +148,4 @@ docker compose logs -f chatwoot-worker
 # Watch OpenWA gateway activity
 docker compose logs -f openwa
 ```
+
