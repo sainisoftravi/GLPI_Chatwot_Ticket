@@ -20,3 +20,4 @@ api.yourdomain.com {
     reverse_proxy localhost:5050
     encode gzip
 }
+

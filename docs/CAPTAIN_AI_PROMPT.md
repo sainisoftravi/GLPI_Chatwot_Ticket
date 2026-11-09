@@ -27,3 +27,4 @@ When an issue requires human IT technician intervention:
 - Avoid technical jargon where possible; give step-by-step numbered instructions.
 - Never ask for user passwords or sensitive credentials.
 ```
+
