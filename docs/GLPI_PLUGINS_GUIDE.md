@@ -55,20 +55,36 @@ Now in your browser:
 
 ---
 
-## ⚡ Method 2: Install via 1-Command Helper Script
+## ⚡ Method 2: Install / Remove via 1-Command Helper Script
 
-You can install any plugin by URL using the helper script:
+You can install or remove any plugin using the helper script:
 
 ```bash
 cd /home/ubuntu/Ticket_Managment_System_Webserver
+git pull origin main
 chmod +x scripts/install_glpi_plugin.sh
 
-# Example 1: Install the Webhook Plugin (for WhatsApp status callbacks)
-./scripts/install_glpi_plugin.sh https://github.com/pluginsGLPI/webhook/releases/download/1.2.0/glpi-webhook-1.2.0.tar.gz
+# Remove an incompatible plugin:
+./scripts/install_glpi_plugin.sh remove formcreator
 
-# Example 2: Install Formcreator (Custom user ticket forms)
-./scripts/install_glpi_plugin.sh https://github.com/pluginsGLPI/formcreator/releases/download/2.13.8/glpi-formcreator-2.13.8.tar.bz2
+# Install a plugin by URL:
+./scripts/install_glpi_plugin.sh https://github.com/pluginsGLPI/mreporting/releases/download/1.11.1/glpi-mreporting-1.11.1.tar.bz2
 ```
+
+---
+
+## 🛠️ Troubleshooting: "An unexpected error occurred" (HTTP 500)
+
+If GLPI displays a red banner saying **"An unexpected error occurred"**:
+This is caused by an **incompatible plugin** (such as older `formcreator 2.13.8` on newer GLPI 10.0.17+ / GLPI 11) calling removed PHP methods like `Plugin::getWebDir()`.
+
+### How to immediately recover GLPI:
+Remove the problematic plugin directory and clear the cache:
+```bash
+docker exec -u 0 glpi-app rm -rf /var/www/glpi/plugins/formcreator
+docker exec glpi-app php bin/console cache:clear
+```
+Refresh your GLPI page (`http://<SERVER_IP>:8085/front/plugin.php`) and GLPI will load normally!
 
 ---
 

@@ -5,24 +5,41 @@
 
 set -e
 
-PLUGIN_URL="$1"
+ACTION="$1"
+ARG="$2"
 
 echo "=========================================================="
 echo " 🔌 GLPI Plugin Manager "
 echo "=========================================================="
+
+# Check GLPI core version
+echo "Detecting GLPI version..."
+docker exec glpi-app php bin/console --version 2>/dev/null || true
+
+# Handle "remove" command: ./scripts/install_glpi_plugin.sh remove <name>
+if [ "$ACTION" == "remove" ] && [ -n "$ARG" ]; then
+    echo "🗑️ Removing plugin: $ARG ..."
+    docker exec -u 0 glpi-app rm -rf "/var/www/glpi/plugins/$ARG"
+    docker exec glpi-app php bin/console cache:clear 2>/dev/null || true
+    echo "✅ Successfully removed '$ARG' and cleared cache!"
+    docker exec glpi-app ls -la /var/www/glpi/plugins
+    exit 0
+fi
 
 # 1. Ensure write permissions for GLPI web server (www-data)
 echo "Setting write permissions on plugins & marketplace directories..."
 docker exec -u 0 glpi-app chown -R www-data:www-data /var/www/glpi/plugins /var/www/glpi/marketplace 2>/dev/null || true
 docker exec -u 0 glpi-app chmod -R 775 /var/www/glpi/plugins /var/www/glpi/marketplace 2>/dev/null || true
 
-# 2. If an existing archive exists in the folder or a URL is passed, extract it
+PLUGIN_URL="$ACTION"
+
+# 2. If a URL is passed or archives exist, extract them
 docker exec -u 0 glpi-app bash -c "
     apt-get update -qq && apt-get install -y -qq bzip2 tar unzip curl >/dev/null 2>&1 || true
     cd /var/www/glpi/plugins
 
-    # Download if URL provided
-    if [ -n '$PLUGIN_URL' ]; then
+    # Download if URL provided (starts with http)
+    if [[ '$PLUGIN_URL' =~ ^https?:// ]]; then
         FILENAME=\$(basename '$PLUGIN_URL')
         echo \"Downloading: \$FILENAME ...\"
         curl -sL '$PLUGIN_URL' -o \"\$FILENAME\"
@@ -60,6 +77,6 @@ docker exec glpi-app ls -la /var/www/glpi/plugins
 
 echo ""
 echo "=========================================================="
-echo " Now refresh GLPI: Setup > Plugins (or Setup > Marketplace)"
-echo " You will see the extracted plugins ready to Install & Enable!"
+echo " Now refresh GLPI: Setup > Plugins"
+echo " (To remove an incompatible plugin: ./scripts/install_glpi_plugin.sh remove <name>)"
 echo "=========================================================="
