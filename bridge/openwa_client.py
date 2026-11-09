@@ -47,12 +47,40 @@ class OpenWAClient:
 
     async def get_session_status(self) -> Dict[str, Any]:
         """Checks WhatsApp connection status of the session."""
+        if not self.api_key:
+            return {
+                "status": "unauthorized",
+                "code": 401,
+                "message": "OPENWA_API_KEY is missing or empty in .env"
+            }
+
         url = f"{self.base_url}/api/sessions/{self.session_name}"
         try:
             async with httpx.AsyncClient(timeout=5.0) as client:
                 resp = await client.get(url, headers=self._get_headers())
                 if resp.status_code == 200:
                     return resp.json()
+                elif resp.status_code == 401:
+                    return {
+                        "status": "unauthorized",
+                        "code": 401,
+                        "message": "Invalid OPENWA_API_KEY. Retrieve with: docker exec openwa-gateway cat /app/data/.api-key"
+                    }
+
+                # Fallback: inspect /api/sessions list
+                list_url = f"{self.base_url}/api/sessions"
+                list_resp = await client.get(list_url, headers=self._get_headers())
+                if list_resp.status_code == 200:
+                    data = list_resp.json()
+                    sessions = data if isinstance(data, list) else data.get("items", [])
+                    for s in sessions:
+                        if s.get("name") == self.session_name or s.get("id") == self.session_name:
+                            return s
+                    return {
+                        "status": "session_not_found",
+                        "configured_session": self.session_name,
+                        "available_sessions": [s.get("name") for s in sessions]
+                    }
                 return {"status": "offline", "code": resp.status_code}
         except Exception as e:
             return {"status": "unreachable", "error": str(e)}
