@@ -53,7 +53,7 @@ services:
   # 2. Chatwoot Stack (Live Chat, WhatsApp & AI Engine)
   # ========================================================
   chatwoot-postgres:
-    image: postgres:15-alpine
+    image: pgvector/pgvector:pg15
     container_name: chatwoot-postgres
     restart: always
     environment:
