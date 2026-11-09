@@ -16,6 +16,12 @@ class Settings(BaseModel):
     chatwoot_base_url: str = os.getenv("CHATWOOT_BASE_URL", "http://chatwoot-web:3000").rstrip("/")
     chatwoot_api_access_token: str = os.getenv("CHATWOOT_API_ACCESS_TOKEN", "")
     chatwoot_account_id: int = int(os.getenv("CHATWOOT_ACCOUNT_ID", "1"))
+    chatwoot_inbox_id: int = int(os.getenv("CHATWOOT_INBOX_ID", "1"))
+
+    # OpenWA (Free WhatsApp Gateway)
+    openwa_base_url: str = os.getenv("OPENWA_BASE_URL", "http://openwa:2785").rstrip("/")
+    openwa_api_key: str = os.getenv("OPENWA_API_KEY", "")
+    openwa_session_name: str = os.getenv("OPENWA_SESSION_NAME", "it-support")
 
     # Security & Trigger Rules
     bridge_secret_token: str = os.getenv("BRIDGE_SECRET_TOKEN", "secure_bridge_webhook_token_998877")

@@ -33,6 +33,7 @@ echo "=========================================================="
 echo " All services running!"
 echo " - GLPI ITSM:           http://localhost:8085"
 echo " - Chatwoot Live & WA:  http://localhost:8050"
+echo " - OpenWA Dashboard(QR):http://localhost:2785"
 echo " - Integration Bridge:  http://localhost:5050/health"
 echo "=========================================================="
 

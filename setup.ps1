@@ -42,6 +42,7 @@ Write-Host "==========================================================" -Foregro
 Write-Host " Access Endpoints:" -ForegroundColor Cyan
 Write-Host " - GLPI ITSM Portal:      http://localhost:8085"
 Write-Host " - Chatwoot Live & WA:    http://localhost:8050"
+Write-Host " - OpenWA Dashboard (QR): http://localhost:2785"
 Write-Host " - Integration Bridge:    http://localhost:5050/health"
 Write-Host "==========================================================" -ForegroundColor Green
 

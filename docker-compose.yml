@@ -8,6 +8,7 @@ volumes:
   chatwoot_pg_data:
   chatwoot_redis_data:
   chatwoot_storage:
+  openwa_data:
 
 services:
   # ========================================================
@@ -121,7 +122,24 @@ services:
       - it-network
 
   # ========================================================
-  # 3. Integration Bridge (Chatwoot <-> GLPI Sync Engine)
+  # 3. OpenWA Gateway (Free Open-Source WhatsApp Hub)
+  # ========================================================
+  openwa:
+    image: ghcr.io/rmyndharis/openwa:latest
+    container_name: openwa-gateway
+    restart: always
+    ports:
+      - "${OPENWA_PORT:-2785}:2785"
+    environment:
+      - ENGINE_TYPE=${OPENWA_ENGINE_TYPE:-baileys}
+      - PORT=2785
+    volumes:
+      - openwa_data:/app/data
+    networks:
+      - it-network
+
+  # ========================================================
+  # 4. Integration Bridge (Chatwoot <-> GLPI <-> OpenWA Sync)
   # ========================================================
   bridge:
     build:
@@ -139,12 +157,17 @@ services:
       - CHATWOOT_BASE_URL=http://chatwoot-web:3000
       - CHATWOOT_API_ACCESS_TOKEN=${CHATWOOT_API_ACCESS_TOKEN:-}
       - CHATWOOT_ACCOUNT_ID=${CHATWOOT_ACCOUNT_ID:-1}
+      - CHATWOOT_INBOX_ID=${CHATWOOT_INBOX_ID:-1}
+      - OPENWA_BASE_URL=${OPENWA_BASE_URL:-http://openwa:2785}
+      - OPENWA_API_KEY=${OPENWA_API_KEY:-}
+      - OPENWA_SESSION_NAME=${OPENWA_SESSION_NAME:-it-support}
       - BRIDGE_SECRET_TOKEN=${BRIDGE_SECRET_TOKEN:-secure_bridge_webhook_token_998877}
       - AUTO_CREATE_TICKET_ON_LABEL=${AUTO_CREATE_TICKET_ON_LABEL:-ticket-needed}
       - DEFAULT_TICKET_CATEGORY_ID=${DEFAULT_TICKET_CATEGORY_ID:-1}
     depends_on:
       - glpi
       - chatwoot-web
+      - openwa
     networks:
       - it-network
 
