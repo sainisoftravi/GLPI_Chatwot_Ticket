@@ -1,0 +1,22 @@
+# =========================================================================
+# Production Caddyfile with Automatic Let's Encrypt SSL
+# Replace yourdomain.com with your actual registered domain
+# =========================================================================
+
+# Chatwoot Web Portal & WhatsApp Webhook
+support.yourdomain.com {
+    reverse_proxy localhost:8050
+    encode gzip
+}
+
+# GLPI ITSM Portal & REST API
+it.yourdomain.com {
+    reverse_proxy localhost:8085
+    encode gzip
+}
+
+# (Optional) External Webhook Endpoint for Bridge
+api.yourdomain.com {
+    reverse_proxy localhost:5050
+    encode gzip
+}
