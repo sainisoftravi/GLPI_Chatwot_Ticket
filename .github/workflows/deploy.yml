@@ -1,0 +1,73 @@
+name: Deploy to Self-Hosted ARM64 Server
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Build & Deploy (ARM64)
+    runs-on: [self-hosted, Linux, ARM64]
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Configure Environment File (.env)
+        run: |
+          echo "Setting up environment configuration..."
+          if [ -n "${{ secrets.ENV_FILE }}" ]; then
+            echo "Injecting .env from GitHub Secrets..."
+            echo "${{ secrets.ENV_FILE }}" > .env
+          elif [ -f "/home/ubuntu/ticket/GLPI_Chatwot_Ticket/.env" ]; then
+            echo "Copying existing server .env file..."
+            cp /home/ubuntu/ticket/GLPI_Chatwot_Ticket/.env .env
+          elif [ ! -f .env ]; then
+            echo "Creating .env from template..."
+            cp .env.example .env
+          else
+            echo "Using existing .env file."
+          fi
+
+      - name: Verify Docker & Compose
+        run: |
+          docker --version
+          docker compose version
+
+      - name: Prepare Chatwoot Database Migrations
+        run: |
+          echo "Running database checks / migrations..."
+          docker compose run --rm chatwoot-web bundle exec rails db:chatwoot_prepare || true
+
+      - name: Build & Deploy Services
+        run: |
+          echo "Building and launching containers..."
+          docker compose up -d --build --remove-orphans
+
+      - name: Healthcheck Verification
+        run: |
+          echo "Waiting 15 seconds for services to initialize..."
+          sleep 15
+          
+          echo "Checking Docker containers status..."
+          docker compose ps
+          
+          echo "Verifying Bridge Healthcheck..."
+          if curl -f -s http://localhost:5050/health; then
+            echo ""
+            echo " Bridge service is healthy!"
+          else
+            echo " Bridge healthcheck failed or still starting up."
+          fi
+
+      - name: Prune Dangling Docker Images
+        run: |
+          echo "Cleaning up dangling images..."
+          docker image prune -f
