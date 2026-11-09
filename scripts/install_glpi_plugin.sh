@@ -18,11 +18,12 @@ docker exec glpi-app php bin/console --version 2>/dev/null || true
 
 # Handle "remove" command: ./scripts/install_glpi_plugin.sh remove <name>
 if [ "$ACTION" == "remove" ] && [ -n "$ARG" ]; then
-    echo "🗑️ Removing plugin: $ARG ..."
-    docker exec -u 0 glpi-app rm -rf "/var/www/glpi/plugins/$ARG"
+    echo "🗑️ Deactivating and removing plugin: $ARG ..."
+    docker exec glpi-app php bin/console plugin:deactivate "$ARG" 2>/dev/null || true
+    docker exec glpi-app php bin/console plugin:uninstall "$ARG" -n 2>/dev/null || true
+    docker exec -u 0 glpi-app rm -rf "/var/www/glpi/plugins/$ARG" "/var/glpi/marketplace/$ARG" "/var/www/glpi/marketplace/$ARG"
     docker exec glpi-app php bin/console cache:clear 2>/dev/null || true
     echo "✅ Successfully removed '$ARG' and cleared cache!"
-    docker exec glpi-app ls -la /var/www/glpi/plugins
     exit 0
 fi
 
