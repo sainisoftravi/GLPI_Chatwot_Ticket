@@ -12,6 +12,7 @@ An enterprise-grade, open-source stack combining:
 
 | Documentation Guide | Description |
 | :--- | :--- |
+| **[Daily Usage & Operations Guide](docs/USAGE_GUIDE.md)** | How to use WhatsApp AI, Chatwoot Live Chat, and GLPI Kanban in daily operations. |
 | **[Installation & Setup Guide](docs/INSTALLATION_GUIDE.md)** | Step-by-step instructions to deploy and configure on your server. |
 | **[System Architecture & Data Flow](docs/ARCHITECTURE.md)** | Architectural blueprints, sequence diagrams, network topology, and component deep dives. |
 | **[API Reference & Webhooks](docs/API_REFERENCE.md)** | Full REST API endpoints, request/response JSON schemas, and webhook specs. |

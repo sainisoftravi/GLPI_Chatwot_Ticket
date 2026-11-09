@@ -119,9 +119,11 @@ You should see all containers running:
 
 4. **Add Bridge Webhook in OpenWA**:
    - In OpenWA Dashboard, go to **Webhooks > Add Webhook**:
+     - **Session**: Select your session (e.g., `demo` or `it-support`).
      - **URL**: `http://bridge:5000/webhook/openwa`
-     - **Event**: `message.received`
-     - Click **Save**.
+     - **Events**: Click and enable `message.received` (turns green).
+     - Click **Create**.
+   - *Important*: In your server `.env`, ensure `OPENWA_SESSION_NAME` matches the session name chosen (e.g. `OPENWA_SESSION_NAME=demo`). Restart the bridge if you change it (`docker compose restart bridge`).
 
 ---
 
@@ -232,4 +234,28 @@ docker compose restart <service_name>
 git pull origin main
 docker compose up -d --build
 ```
+
+---
+
+## 🛠️ Troubleshooting & Cloud Firewall Guide
+
+### 1. Cloud Provider & OS Firewalls (e.g. Oracle Cloud / AWS)
+If you cannot open port `2785`, `8050`, or `8085` in your browser:
+- **Cloud Console**: In Oracle Cloud VCN / AWS Security Groups, add Ingress Rules allowing ports `2785, 8050, 8085, 5050` from CIDR `0.0.0.0/0`.
+- **Host OS Firewall**: Default Ubuntu images block non-SSH ports with iptables. Open them via:
+  ```bash
+  sudo iptables -I INPUT -p tcp --dport 2785 -j ACCEPT
+  sudo iptables -I INPUT -p tcp --dport 8050 -j ACCEPT
+  sudo iptables -I INPUT -p tcp --dport 8085 -j ACCEPT
+  sudo iptables -I INPUT -p tcp --dport 5050 -j ACCEPT
+  sudo netfilter-persistent save 2>/dev/null || sudo iptables-save | sudo tee /etc/iptables/rules.v4
+  ```
+
+### 2. OpenWA Blank Screen over Plain HTTP
+If `http://<SERVER_IP>:2785/` opens to a blank screen, OpenWA's production Content Security Policy is attempting to upgrade assets to HTTPS.
+Ensure `CSP_UPGRADE_INSECURE_REQUESTS=false` is set under `openwa: environment:` in `docker-compose.yml`.
+
+### 3. Chatwoot "relation installation_configs does not exist" or "vector is not available"
+Chatwoot v4 requires PostgreSQL with the `pgvector` extension.
+Ensure `chatwoot-postgres` is running `pgvector/pgvector:pg15`. The compose setup will automatically run `bundle exec rails db:chatwoot_prepare` on container boot.
 
