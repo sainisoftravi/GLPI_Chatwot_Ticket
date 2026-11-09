@@ -1,29 +1,46 @@
 # IT Ticketing & Task Management with Chat Support & WhatsApp AI Integration
 
-An enterprise-ready, open-source stack combining:
-1. **GLPI**: ITIL Ticketing, CMDB Asset Inventory, and Technician Kanban Task Boards.
-2. **Chatwoot**: Live Chat Portal, Meta WhatsApp Business API integration, and Captain AI / OpenAI automated triage.
-3. **Integration Bridge**: Real-time bidirectional webhook sync between WhatsApp/Chatwoot threads and GLPI ITIL Tickets & Tasks.
+An enterprise-grade, open-source stack combining:
+1. **GLPI ITSM Core**: ITIL processes, CMDB asset inventory, and technician Kanban task boards.
+2. **Chatwoot**: Live chat portal, Captain AI / OpenAI automated triage, and omnichannel team inbox.
+3. **OpenWA Gateway**: 100% free, open-source WhatsApp API Gateway (no paid Meta Cloud API, no credit card, QR code linked).
+4. **Integration Bridge**: Real-time bi-directional FastAPI webhook bridge synchronizing WhatsApp messages, Chatwoot threads, and GLPI ITIL Tickets & Tasks.
 
 ---
 
-## 🏛️ Architecture Overview
+## 📚 Complete Documentation Library
+
+| Documentation Guide | Description |
+| :--- | :--- |
+| **[Installation & Setup Guide](docs/INSTALLATION_GUIDE.md)** | Step-by-step instructions to deploy and configure on your server. |
+| **[System Architecture & Data Flow](docs/ARCHITECTURE.md)** | Architectural blueprints, sequence diagrams, network topology, and component deep dives. |
+| **[API Reference & Webhooks](docs/API_REFERENCE.md)** | Full REST API endpoints, request/response JSON schemas, and webhook specs. |
+| **[OpenWA WhatsApp QR Guide](docs/OPENWA_SETUP_GUIDE.md)** | How to link any WhatsApp phone number in 10 seconds via QR code. |
+| **[Captain AI IT Support Prompt](docs/CAPTAIN_AI_PROMPT.md)** | Production system prompt for Tier-1 IT Support triage in Chatwoot. |
+| **[Meta WhatsApp Templates](docs/META_WHATSAPP_TEMPLATES.md)** | Pre-written templates if you ever choose to migrate to official Meta Cloud API. |
+
+---
+
+## 🏛️ System Architecture
 
 ```mermaid
 flowchart TD
-    subgraph Users ["Client & Employee Channels"]
+    subgraph Users ["User & Employee Channels"]
         WA["📱 WhatsApp User"]
-        WEB["💻 Web Live Chat"]
+        WEB["💻 Intranet / Web Live Chat"]
     end
 
-    subgraph Chatwoot_Engine ["Chatwoot Communication Engine"]
-        META["Meta WhatsApp Cloud API"]
+    subgraph WhatsApp_Gateway ["WhatsApp Gateway Tier (Free Open-Source)"]
+        OPENWA["⚡ OpenWA Gateway (:2785)\n(Baileys Engine - QR Code Linked)"]
+    end
+
+    subgraph Chatwoot_Hub ["Chatwoot Communication Engine"]
         CW_INBOX["Chatwoot Omnichannel Inbox (:8050)"]
         AI_BOT["🤖 Captain AI / OpenAI Agent\n(Knowledge Base & Self-Service)"]
     end
 
     subgraph Middleware ["Integration Bridge (FastAPI)"]
-        BRIDGE["🔄 Bi-directional Webhook Bridge\n(:5050)"]
+        BRIDGE["🔄 Bi-directional Webhook Bridge (:5050)\n(Event Deduplication, Ticket Mapping, Relays)"]
     end
 
     subgraph GLPI_ITSM ["GLPI ITSM Core"]
@@ -32,220 +49,62 @@ flowchart TD
         GLPI_KANBAN["📋 Technician Kanban Task Board\n(Sub-tasks, Teams, Assignments)"]
     end
 
-    WA --> META
-    META --> CW_INBOX
-    WEB --> CW_INBOX
-
+    WA <-->|WhatsApp Protocol| OPENWA
+    OPENWA <-->|Webhooks & REST| BRIDGE
+    WEB <--> CW_INBOX
     CW_INBOX <--> AI_BOT
-    
-    CW_INBOX -- "Trigger: #ticket / AI Escalation" --> BRIDGE
-    BRIDGE -- "Create Ticket + Kanban Tasks" --> GLPI_API
-    GLPI_API --> GLPI_TICKETS
-    GLPI_TICKETS --> GLPI_KANBAN
 
-    GLPI_TICKETS -- "Ticket Solved / Updated" --> BRIDGE
-    BRIDGE -- "WhatsApp Notification" --> CW_INBOX
-    CW_INBOX --> WA
+    BRIDGE <-->|API Channel Webhooks & REST| CW_INBOX
+    BRIDGE <-->|REST API| GLPI_API
+    GLPI_API <--> GLPI_TICKETS
+    GLPI_TICKETS <--> GLPI_KANBAN
 ```
 
 ---
 
-## 🚀 Quick Start Guide
+## 🌐 Network Ports Table
 
-### Prerequisites
-- [Docker](https://docs.docker.com/get-docker/) & [Docker Compose](https://docs.docker.com/compose/)
-- Git
+| Service | Internal Port | Host Port | URL Endpoint | Description |
+| :--- | :--- | :--- | :--- | :--- |
+| **GLPI ITSM** | `80` | **`8085`** | `http://<SERVER_IP>:8085` | Web portal, Kanban task board, REST API |
+| **Chatwoot Web** | `3000` | **`8050`** | `http://<SERVER_IP>:8050` | Agent inbox, Live chat widget, AI settings |
+| **OpenWA Gateway** | `2785` | **`2785`** | `http://<SERVER_IP>:2785` | WhatsApp QR Code Dashboard & REST API |
+| **Integration Bridge**| `5000` | **`5050`** | `http://<SERVER_IP>:5050/health`| FastAPI Webhook router & data synchronizer |
 
-### 1. Clone & Configure Environment
-Copy `.env.example` to `.env`:
+*All databases (MariaDB 10.11, PostgreSQL 15, Redis) are isolated inside the internal Docker bridge network (`it-network`).*
+
+---
+
+## ⚡ Quick Deployment (Single Command)
+
+### On Server:
 ```bash
-cp .env.example .env
-```
-Key configuration settings in `.env`:
-- `GLPI_PORT`: GLPI web portal port (default: `8085`)
-- `CHATWOOT_PORT`: Chatwoot web portal port (default: `8050`)
-- `BRIDGE_PORT`: Integration Bridge webhook port (default: `5050`)
-- `OPENAI_API_KEY`: Your OpenAI API Key for Captain AI triage
-- `BRIDGE_SECRET_TOKEN`: Shared secret token for webhook verification
+# 1. Clone repository to target directory
+mkdir -p /home/ubuntu/Ticket_Managment_System_Webserver
+cd /home/ubuntu/Ticket_Managment_System_Webserver
+git clone https://github.com/sainisoftravi/GLPI_Chatwot_Ticket.git .
 
-### 2. Automatic Initialization & Startup
-#### On Windows (PowerShell):
-```powershell
-.\setup.ps1
-```
-
-#### On Linux / macOS:
-```bash
+# 2. Run automated setup
 chmod +x setup.sh
 ./setup.sh
 ```
 
-The setup script:
-1. Configures the environment.
-2. Prepares Chatwoot PostgreSQL database tables (`db:chatwoot_prepare`).
-3. Builds and boots all services:
-   - **GLPI ITSM**: [http://localhost:8085](http://localhost:8085)
-   - **Chatwoot Dashboard**: [http://localhost:8050](http://localhost:8050)
-   - **Bridge Service**: [http://localhost:5050/health](http://localhost:5050/health)
-
 ---
 
-## ⚙️ Configuration Manual
+## 🔄 How the End-to-End Workflow Works
 
-### Step 1: GLPI Initial Setup & REST API Activation
+1. **User asks question on WhatsApp**:
+   - Sends a message to your WhatsApp number.
+   - OpenWA forwards it to the Bridge, which injects it into Chatwoot.
+2. **AI First-Line Defense**:
+   - Captain AI searches your IT documentation and replies with troubleshooting steps.
+3. **Escalation to ITIL Ticket**:
+   - If user replies `#ticket` (or agent adds label `ticket-needed`):
+   - Bridge automatically creates an ITIL Ticket in GLPI with requester info and chat history.
+   - An initial diagnostic sub-task is automatically placed on the GLPI Kanban board.
+   - User gets an immediate confirmation on WhatsApp: *"🎫 Hello! Your request has been logged as Ticket #101. An IT technician is investigating."*
+4. **Technician Resolution**:
+   - Technician drags ticket to **Solved** on GLPI Kanban and adds resolution notes.
+   - GLPI webhook triggers Bridge, which relays the resolution back to the customer on WhatsApp.
 
-1. **Complete Web Wizard**:
-   - Navigate to `http://localhost:8085`.
-   - Select your language, accept the license, choose **Install**.
-   - Database Connection parameters:
-     - **Database Host**: `glpi-mariadb`
-     - **User**: `glpi`
-     - **Password**: `glpi_secure_pwd_123` (or the value set in `.env`)
-     - **Database**: `glpidb`
-   - Default administrator credentials:
-     - Username: `glpi`
-     - Password: `glpi` *(remember to change this upon first login)*.
-
-2. **Enable GLPI REST API**:
-   - Go to **Setup** > **General** > **API** tab.
-   - Set **Enable REST API** to `Yes`.
-   - Set **Enable login with external token** to `Yes`.
-   - Click **Add API client**:
-     - Name: `Chatwoot Bridge`
-     - Active: `Yes`
-     - Click **Regenerate** on **Application token (app_token)**.
-     - Copy this token and paste it into `.env` as `GLPI_APP_TOKEN`.
-
-3. **Generate User Token**:
-   - Go to **Administration** > **Users** > select `glpi` (or an IT technician user).
-   - Go to the **Remote access keys** / **API Token** section.
-   - Click **Regenerate** under **Personal token (user_token)**.
-   - Copy this token and paste it into `.env` as `GLPI_USER_TOKEN`.
-
-4. **Restart the Bridge Container**:
-   ```bash
-   docker-compose restart bridge
-   ```
-
----
-
-### Step 2: Chatwoot WhatsApp Business API Setup
-
-1. **Log in to Chatwoot**:
-   - Navigate to `http://localhost:8050`.
-   - Create your Super Admin account on first launch.
-
-2. **Add WhatsApp Inbox**:
-   - Go to **Settings** > **Inboxes** > **Add Inbox**.
-   - Select **WhatsApp** (Cloud API).
-   - Provide your Meta Developer credentials:
-     - **Phone Number ID** (from Meta WhatsApp Developer Dashboard).
-     - **WhatsApp Business Account ID (WABA ID)**.
-     - **Permanent Access Token** with `whatsapp_business_messaging` permissions.
-   - Set the Webhook Callback URL and Verify Token in your Meta Developer App as instructed by Chatwoot.
-
-3. **Add Live Chat Widget (Optional)**:
-   - In **Settings** > **Inboxes** > **Add Inbox**, choose **Website Channel**.
-   - Copy the JavaScript snippet to embed live chat on your internal intranet, employee self-service portal, or company website.
-
----
-
-### Step 3: Chatwoot AI Integration (Captain AI / OpenAI)
-
-1. **Activate OpenAI / Captain in Chatwoot**:
-   - Ensure `OPENAI_API_KEY` is specified in `.env`.
-   - Go to **Settings** > **Integrations** > **OpenAI**.
-   - Hook your OpenAI key and configure features:
-     - *Reply Suggestions*: Suggested answers based on past tickets.
-     - *Conversation Summarization*: Synthesizes long user discussions into concise bullet points.
-     - *Rephrase & Fix Grammar*: Formats professional responses.
-
-2. **Captain AI & Knowledge Base**:
-   - In Chatwoot, navigate to **Help Center** / **Portals**.
-   - Upload IT self-service troubleshooting guides (e.g., VPN setup, password resets, Wi-Fi connectivity, printer drivers).
-   - Configure Captain AI to triage conversations first. If the user indicates the issue remains unresolved, Captain can append the label `ticket-needed`, automatically triggering the Bridge to create a GLPI ticket!
-
----
-
-### Step 4: Configure Chatwoot Webhook to Bridge
-
-1. In Chatwoot, navigate to **Settings** > **Integrations** > **Webhooks** > **Add Webhook**.
-2. Set the Webhook URL:
-   - For container-to-container inside Docker network: `http://bridge:5000/webhook/chatwoot`
-   - (Or if using host networking: `http://<YOUR_SERVER_IP>:5050/webhook/chatwoot`)
-3. Select subscriptions:
-   - `Message Created`
-   - `Conversation Created`
-   - `Conversation Updated`
-
----
-
-## 🛠️ IT Task Matrix & GLPI Kanban Boards
-
-GLPI features native Kanban boards to manage IT tasks across multiple teams:
-
-1. **Accessing the Kanban Board**:
-   - Go to **Assistance** > **Tickets**.
-   - In the top right corner, switch the view from **List** to **Kanban (Global)** or **Personal Kanban**.
-   - Columns automatically group tickets by state:
-     - `New` (Unassigned incoming requests)
-     - `Assigned` (Technician assigned, in progress)
-     - `Planned` (Scheduled maintenance or planned interventions)
-     - `Pending` (Awaiting vendor or user feedback)
-     - `Solved` (Technician completed work)
-     - `Closed` (Confirmed and closed)
-
-2. **Decomposing Issues into Sub-Tasks**:
-   - When the Bridge creates a GLPI Ticket from WhatsApp, it automatically inserts an initial task: `Initial Triage & Diagnostics`.
-   - Open any Ticket > click **Tasks** tab.
-   - Add granular sub-tasks, such as:
-     - *Network team: Check firewall whitelist*
-     - *SysAdmin: Reset Active Directory account lockout*
-     - *Hardware team: Dispatch replacement docking station*
-   - Sub-tasks have individual duration timers, status (`To do`, `In progress`, `Done`), and assignee technicians.
-
----
-
-## 🧪 Testing the End-to-End Workflow
-
-1. **User opens WhatsApp** and sends a message:
-   > *"Hello, our warehouse barcode scanner is not connecting to the local Wi-Fi network."*
-
-2. **Chatwoot AI responds**:
-   > Provides knowledge base steps (check SSID, reboot device).
-
-3. **Escalation to Technician**:
-   - Either the user replies: *"That didn't fix it, please dispatch IT"* or types `#ticket`.
-   - Or the agent/AI applies the label `ticket-needed`.
-
-4. **Automatic GLPI Ticket Generation**:
-   - The Bridge microservice creates Ticket `#101` in GLPI with the user's WhatsApp number, name, and chat transcript.
-   - A sub-task is automatically placed on the GLPI Kanban board.
-   - Chatwoot posts an internal note with the direct GLPI ticket link.
-   - WhatsApp user receives instant confirmation:
-     > *"🎫 Hello! Your request has been logged in our IT Management System. Ticket Number: #101. An IT technician is investigating."*
-
-5. **Resolution & Feedback**:
-   - Technician moves the ticket to **Solved** on GLPI Kanban and adds resolution notes.
-   - GLPI webhook triggers the Bridge, which sends an update directly back to the user on WhatsApp.
-
----
-
-## 📁 Repository Structure
-
-```
-TICKET-Managment-System/
-├── docker-compose.yml        # Multi-container orchestration (GLPI, Chatwoot, MariaDB, Postgres, Redis, Bridge)
-├── .env.example              # Environment variables template
-├── setup.ps1                 # Windows automated deployment script
-├── setup.sh                  # Linux/macOS automated deployment script
-├── README.md                 # System architecture and manual
-└── bridge/                   # Fast-API Integration Microservice
-    ├── Dockerfile            # Python 3.11 container definition
-    ├── requirements.txt      # FastAPI, Uvicorn, HTTPX dependencies
-    ├── config.py             # App configuration & environment loader
-    ├── glpi_client.py        # GLPI REST API client (Tickets & Kanban Tasks)
-    ├── chatwoot_client.py    # Chatwoot REST API client (WhatsApp messages & tags)
-    └── main.py               # Bi-directional Webhook handlers & background workers
-```
-
+For full step-by-step configuration, see the **[Installation Guide](docs/INSTALLATION_GUIDE.md)**.

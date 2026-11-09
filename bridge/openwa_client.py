@@ -56,3 +56,4 @@ class OpenWAClient:
                 return {"status": "offline", "code": resp.status_code}
         except Exception as e:
             return {"status": "unreachable", "error": str(e)}
+
