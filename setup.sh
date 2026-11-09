@@ -12,13 +12,22 @@ fi
 
 echo "[2/4] Verifying Docker..."
 docker --version
-docker-compose --version
+
+if docker compose version &>/dev/null; then
+    COMPOSE_CMD="docker compose"
+elif command -v docker-compose &>/dev/null; then
+    COMPOSE_CMD="docker-compose"
+else
+    echo "Error: Docker Compose is not installed."
+    exit 1
+fi
+echo "Using compose command: $COMPOSE_CMD"
 
 echo "[3/4] Initializing Chatwoot Database..."
-docker-compose run --rm chatwoot-web bundle exec rails db:chatwoot_prepare
+$COMPOSE_CMD run --rm chatwoot-web bundle exec rails db:chatwoot_prepare
 
 echo "[4/4] Starting all containers..."
-docker-compose up -d --build
+$COMPOSE_CMD up -d --build
 
 echo "=========================================================="
 echo " All services running!"
