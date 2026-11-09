@@ -133,6 +133,8 @@ services:
     environment:
       - ENGINE_TYPE=${OPENWA_ENGINE_TYPE:-baileys}
       - PORT=2785
+      - CSP_UPGRADE_INSECURE_REQUESTS=false
+      - ENABLE_SWAGGER=true
     volumes:
       - openwa_data:/app/data
     networks:
