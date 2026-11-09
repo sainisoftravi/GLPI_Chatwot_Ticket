@@ -210,3 +210,4 @@ async def handle_glpi_webhook(request: Request):
         return {"status": "message_relayed_to_whatsapp", "conversation_id": conversation_id}
 
     return {"status": "no_conversation_mapped"}
+

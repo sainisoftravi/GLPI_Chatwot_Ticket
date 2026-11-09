@@ -16,19 +16,19 @@ flowchart TD
         WEB["💻 Web Live Chat"]
     end
 
-    subgraph Chatwoot_Hub ["Chatwoot Communication Engine"]
+    subgraph Chatwoot_Engine ["Chatwoot Communication Engine"]
         META["Meta WhatsApp Cloud API"]
-        CW_INBOX["Chatwoot Omnichannel Inbox"]
+        CW_INBOX["Chatwoot Omnichannel Inbox (:8050)"]
         AI_BOT["🤖 Captain AI / OpenAI Agent\n(Knowledge Base & Self-Service)"]
     end
 
     subgraph Middleware ["Integration Bridge (FastAPI)"]
-        BRIDGE["🔄 Bi-directional Webhook Bridge\n(:5000)"]
+        BRIDGE["🔄 Bi-directional Webhook Bridge\n(:5050)"]
     end
 
     subgraph GLPI_ITSM ["GLPI ITSM Core"]
         GLPI_API["GLPI REST API\n(/apirest.php)"]
-        GLPI_TICKETS["ITIL Ticket Management\n(SLA, Priorities, Requester CMDB)"]
+        GLPI_TICKETS["ITIL Ticket Management (:8085)\n(SLA, Priorities, Requester CMDB)"]
         GLPI_KANBAN["📋 Technician Kanban Task Board\n(Sub-tasks, Teams, Assignments)"]
     end
 
@@ -62,8 +62,9 @@ Copy `.env.example` to `.env`:
 cp .env.example .env
 ```
 Key configuration settings in `.env`:
-- `GLPI_PORT`: GLPI web portal port (default: `8080`)
-- `CHATWOOT_PORT`: Chatwoot web portal port (default: `3000`)
+- `GLPI_PORT`: GLPI web portal port (default: `8085`)
+- `CHATWOOT_PORT`: Chatwoot web portal port (default: `8050`)
+- `BRIDGE_PORT`: Integration Bridge webhook port (default: `5050`)
 - `OPENAI_API_KEY`: Your OpenAI API Key for Captain AI triage
 - `BRIDGE_SECRET_TOKEN`: Shared secret token for webhook verification
 
@@ -83,9 +84,9 @@ The setup script:
 1. Configures the environment.
 2. Prepares Chatwoot PostgreSQL database tables (`db:chatwoot_prepare`).
 3. Builds and boots all services:
-   - **GLPI ITSM**: [http://localhost:8080](http://localhost:8080)
-   - **Chatwoot Dashboard**: [http://localhost:3000](http://localhost:3000)
-   - **Bridge Service**: [http://localhost:5000/health](http://localhost:5000/health)
+   - **GLPI ITSM**: [http://localhost:8085](http://localhost:8085)
+   - **Chatwoot Dashboard**: [http://localhost:8050](http://localhost:8050)
+   - **Bridge Service**: [http://localhost:5050/health](http://localhost:5050/health)
 
 ---
 
@@ -94,7 +95,7 @@ The setup script:
 ### Step 1: GLPI Initial Setup & REST API Activation
 
 1. **Complete Web Wizard**:
-   - Navigate to `http://localhost:8080`.
+   - Navigate to `http://localhost:8085`.
    - Select your language, accept the license, choose **Install**.
    - Database Connection parameters:
      - **Database Host**: `glpi-mariadb`
@@ -131,7 +132,7 @@ The setup script:
 ### Step 2: Chatwoot WhatsApp Business API Setup
 
 1. **Log in to Chatwoot**:
-   - Navigate to `http://localhost:3000`.
+   - Navigate to `http://localhost:8050`.
    - Create your Super Admin account on first launch.
 
 2. **Add WhatsApp Inbox**:
@@ -171,7 +172,7 @@ The setup script:
 1. In Chatwoot, navigate to **Settings** > **Integrations** > **Webhooks** > **Add Webhook**.
 2. Set the Webhook URL:
    - For container-to-container inside Docker network: `http://bridge:5000/webhook/chatwoot`
-   - (Or if using host networking: `http://<YOUR_SERVER_IP>:5000/webhook/chatwoot`)
+   - (Or if using host networking: `http://<YOUR_SERVER_IP>:5050/webhook/chatwoot`)
 3. Select subscriptions:
    - `Message Created`
    - `Conversation Created`
@@ -247,3 +248,4 @@ TICKET-Managment-System/
     ├── chatwoot_client.py    # Chatwoot REST API client (WhatsApp messages & tags)
     └── main.py               # Bi-directional Webhook handlers & background workers
 ```
+

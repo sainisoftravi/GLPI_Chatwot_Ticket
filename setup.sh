@@ -22,7 +22,8 @@ docker-compose up -d --build
 
 echo "=========================================================="
 echo " All services running!"
-echo " - GLPI ITSM:           http://localhost:8080"
-echo " - Chatwoot Live & WA:  http://localhost:3000"
-echo " - Integration Bridge:  http://localhost:5000/health"
+echo " - GLPI ITSM:           http://localhost:8085"
+echo " - Chatwoot Live & WA:  http://localhost:8050"
+echo " - Integration Bridge:  http://localhost:5050/health"
 echo "=========================================================="
+

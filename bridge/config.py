@@ -20,6 +20,7 @@ class Settings(BaseModel):
     # Security & Trigger Rules
     bridge_secret_token: str = os.getenv("BRIDGE_SECRET_TOKEN", "secure_bridge_webhook_token_998877")
     auto_create_ticket_on_label: str = os.getenv("AUTO_CREATE_TICKET_ON_LABEL", "ticket-needed")
-    public_glpi_url: str = os.getenv("PUBLIC_GLPI_URL", "http://localhost:8080").rstrip("/")
+    public_glpi_url: str = os.getenv("PUBLIC_GLPI_URL", "http://localhost:8085").rstrip("/")
 
 settings = Settings()
+

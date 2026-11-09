@@ -133,3 +133,4 @@ class GLPIClient:
             if resp.status_code == 200:
                 return resp.json()
             resp.raise_for_status()
+

@@ -36,7 +36,7 @@ services:
     depends_on:
       - glpi-db
     ports:
-      - "${GLPI_PORT:-8080}:80"
+      - "${GLPI_PORT:-8085}:80"
     environment:
       TIMEZONE: ${TIMEZONE:-Asia/Kolkata}
     volumes:
@@ -77,9 +77,9 @@ services:
       - chatwoot-postgres
       - chatwoot-redis
     ports:
-      - "${CHATWOOT_PORT:-3000}:3000"
+      - "${CHATWOOT_PORT:-8050}:3000"
     environment:
-      - FRONTEND_URL=${FRONTEND_URL:-http://localhost:3000}
+      - FRONTEND_URL=${FRONTEND_URL:-http://localhost:8050}
       - SECRET_KEY_BASE=${SECRET_KEY_BASE:-4a87b8f3e2910c73e1f0e498d28a1c6a7e0f3b4c5d6e7f8a9b0c1d2e3f4a5b6c}
       - DATABASE_URL=postgres://${POSTGRES_USER:-chatwoot}:${POSTGRES_PASSWORD:-chatwoot_secure_pwd_123}@chatwoot-postgres:5432/${POSTGRES_DB:-chatwoot}
       - REDIS_URL=redis://chatwoot-redis:6379
@@ -102,7 +102,7 @@ services:
       - chatwoot-postgres
       - chatwoot-redis
     environment:
-      - FRONTEND_URL=${FRONTEND_URL:-http://localhost:3000}
+      - FRONTEND_URL=${FRONTEND_URL:-http://localhost:8050}
       - SECRET_KEY_BASE=${SECRET_KEY_BASE:-4a87b8f3e2910c73e1f0e498d28a1c6a7e0f3b4c5d6e7f8a9b0c1d2e3f4a5b6c}
       - DATABASE_URL=postgres://${POSTGRES_USER:-chatwoot}:${POSTGRES_PASSWORD:-chatwoot_secure_pwd_123}@chatwoot-postgres:5432/${POSTGRES_DB:-chatwoot}
       - REDIS_URL=redis://chatwoot-redis:6379
@@ -126,12 +126,12 @@ services:
     container_name: it-integration-bridge
     restart: always
     ports:
-      - "${BRIDGE_PORT:-5000}:5000"
+      - "${BRIDGE_PORT:-5050}:5000"
     environment:
       - GLPI_BASE_URL=http://glpi:80
       - GLPI_APP_TOKEN=${GLPI_APP_TOKEN:-}
       - GLPI_USER_TOKEN=${GLPI_USER_TOKEN:-}
-      - PUBLIC_GLPI_URL=${GLPI_BASE_URL:-http://localhost:8080}
+      - PUBLIC_GLPI_URL=${GLPI_BASE_URL:-http://localhost:8085}
       - CHATWOOT_BASE_URL=http://chatwoot-web:3000
       - CHATWOOT_API_ACCESS_TOKEN=${CHATWOOT_API_ACCESS_TOKEN:-}
       - CHATWOOT_ACCOUNT_ID=${CHATWOOT_ACCOUNT_ID:-1}
@@ -143,3 +143,4 @@ services:
       - chatwoot-web
     networks:
       - it-network
+
