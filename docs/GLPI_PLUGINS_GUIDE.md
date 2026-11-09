@@ -8,6 +8,9 @@ We have updated `docker-compose.yml` to persist both `glpi_plugins` and `glpi_ma
 
 ---
 
+> [!NOTE] 
+> **GLPI v10+ Native Webhooks:** In GLPI 10+, **Webhooks are built-in natively**! You do not need to install an external webhook plugin. Look at your left menu under **Setup** > **Webhooks** to configure outbound webhooks.
+
 ## ⚡ Method 1: Fix Web UI Permissions (Install via Browser Marketplace)
 
 To enable 1-click plugin installation from the GLPI Web Marketplace:
