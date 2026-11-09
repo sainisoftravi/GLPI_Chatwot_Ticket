@@ -11,64 +11,77 @@ concurrency:
   group: production-deploy
   cancel-in-progress: false
 
+env:
+  DEPLOY_DIR: /home/ubuntu/Ticket_Managment_System_Webserver
+
 jobs:
   deploy:
-    name: Build & Deploy (ARM64)
+    name: Build & Deploy to Target Path (ARM64)
     runs-on: [self-hosted, Linux, ARM64]
 
     steps:
-      - name: Checkout Repository
+      - name: Checkout Repository Code
         uses: actions/checkout@v4
 
-      - name: Configure Environment File (.env)
+      - name: Sync Code to Target Directory
         run: |
-          echo "Setting up environment configuration..."
+          echo "Ensuring deployment directory exists: $DEPLOY_DIR"
+          mkdir -p "$DEPLOY_DIR"
+          
+          echo "Syncing repository files to $DEPLOY_DIR..."
+          # Sync all files except .git and preserve server's existing .env if already present
+          rsync -av --exclude='.git' --exclude='.env' ./ "$DEPLOY_DIR/"
+
+      - name: Configure Environment File (.env)
+        working-directory: /home/ubuntu/Ticket_Managment_System_Webserver
+        run: |
+          echo "Managing .env file in $DEPLOY_DIR..."
           if [ -n "${{ secrets.ENV_FILE }}" ]; then
             echo "Injecting .env from GitHub Secrets..."
             echo "${{ secrets.ENV_FILE }}" > .env
-          elif [ -f "/home/ubuntu/ticket/GLPI_Chatwot_Ticket/.env" ]; then
-            echo "Copying existing server .env file..."
-            cp /home/ubuntu/ticket/GLPI_Chatwot_Ticket/.env .env
           elif [ ! -f .env ]; then
-            echo "Creating .env from template..."
+            echo "Initializing .env from .env.example..."
             cp .env.example .env
           else
-            echo "Using existing .env file."
+            echo "Preserving existing .env file in $DEPLOY_DIR."
           fi
 
       - name: Verify Docker & Compose
+        working-directory: /home/ubuntu/Ticket_Managment_System_Webserver
         run: |
           docker --version
           docker compose version
 
       - name: Prepare Chatwoot Database Migrations
+        working-directory: /home/ubuntu/Ticket_Managment_System_Webserver
         run: |
-          echo "Running database checks / migrations..."
+          echo "Checking/preparing Chatwoot database schema..."
           docker compose run --rm chatwoot-web bundle exec rails db:chatwoot_prepare || true
 
-      - name: Build & Deploy Services
+      - name: Build & Launch Containers
+        working-directory: /home/ubuntu/Ticket_Managment_System_Webserver
         run: |
-          echo "Building and launching containers..."
+          echo "Deploying containers from $DEPLOY_DIR..."
           docker compose up -d --build --remove-orphans
 
       - name: Healthcheck Verification
+        working-directory: /home/ubuntu/Ticket_Managment_System_Webserver
         run: |
           echo "Waiting 15 seconds for services to initialize..."
           sleep 15
           
-          echo "Checking Docker containers status..."
+          echo "Checking running container statuses:"
           docker compose ps
           
-          echo "Verifying Bridge Healthcheck..."
+          echo "Verifying Bridge Health Endpoint..."
           if curl -f -s http://localhost:5050/health; then
             echo ""
-            echo " Bridge service is healthy!"
+            echo " Bridge service is healthy and active!"
           else
-            echo " Bridge healthcheck failed or still starting up."
+            echo " Bridge healthcheck returned non-200 or is still starting."
           fi
 
       - name: Prune Dangling Docker Images
         run: |
-          echo "Cleaning up dangling images..."
+          echo "Cleaning up dangling images to preserve ARM64 storage..."
           docker image prune -f
-
