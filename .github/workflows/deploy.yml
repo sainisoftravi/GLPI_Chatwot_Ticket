@@ -32,18 +32,15 @@ jobs:
           # Sync all files except .git and preserve server's existing .env if already present
           rsync -av --exclude='.git' --exclude='.env' ./ "$DEPLOY_DIR/"
 
-      - name: Configure Environment File (.env)
+      - name: Preserve & Validate Server Environment File (.env)
         working-directory: /home/ubuntu/Ticket_Managment_System_Webserver
         run: |
-          echo "Managing .env file in $DEPLOY_DIR..."
-          if [ -n "${{ secrets.ENV_FILE }}" ]; then
-            echo "Injecting .env from GitHub Secrets..."
-            echo "${{ secrets.ENV_FILE }}" > .env
-          elif [ ! -f .env ]; then
-            echo "Initializing .env from .env.example..."
+          echo "Checking .env in $DEPLOY_DIR..."
+          if [ ! -f .env ]; then
+            echo "No .env file found. Creating initial .env from .env.example..."
             cp .env.example .env
           else
-            echo "Preserving existing .env file in $DEPLOY_DIR."
+            echo "✅ Existing server .env found. Preserving your server configuration."
           fi
 
       - name: Verify Docker & Compose
