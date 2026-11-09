@@ -48,3 +48,4 @@ echo "=========================================================="
 echo " Now open GLPI: Setup > Plugins (or Setup > Marketplace)"
 echo " Click 'Install' and 'Enable' on your new plugin."
 echo "=========================================================="
+

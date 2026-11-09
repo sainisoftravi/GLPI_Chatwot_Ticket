@@ -68,3 +68,4 @@ chmod -R 775 /var/www/glpi/plugins
 4. Click the **Enable** button (play/check icon).
 
 The plugin is now active and its configuration menu will appear under **Setup** or **Administration**.
+
