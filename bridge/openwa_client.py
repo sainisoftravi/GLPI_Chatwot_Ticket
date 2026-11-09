@@ -15,6 +15,7 @@ class OpenWAClient:
         headers = {"Content-Type": "application/json"}
         if self.api_key:
             headers["X-API-Key"] = self.api_key
+            headers["Authorization"] = f"Bearer {self.api_key}"
         return headers
 
     async def send_message(self, chat_id: str, text: str) -> Dict[str, Any]:

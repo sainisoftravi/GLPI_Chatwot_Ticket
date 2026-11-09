@@ -7,21 +7,21 @@ load_dotenv()
 class Settings(BaseModel):
     # GLPI
     glpi_base_url: str = os.getenv("GLPI_BASE_URL", "http://glpi:80").rstrip("/")
-    glpi_app_token: str = os.getenv("GLPI_APP_TOKEN", "")
-    glpi_user_token: str = os.getenv("GLPI_USER_TOKEN", "")
+    glpi_app_token: str = os.getenv("GLPI_APP_TOKEN", "").strip().strip('"').strip("'")
+    glpi_user_token: str = os.getenv("GLPI_USER_TOKEN", "").strip().strip('"').strip("'")
     default_ticket_category_id: int = int(os.getenv("DEFAULT_TICKET_CATEGORY_ID", "1"))
     default_it_group_id: int = int(os.getenv("DEFAULT_IT_GROUP_ID", "1"))
 
     # Chatwoot
     chatwoot_base_url: str = os.getenv("CHATWOOT_BASE_URL", "http://chatwoot-web:3000").rstrip("/")
-    chatwoot_api_access_token: str = os.getenv("CHATWOOT_API_ACCESS_TOKEN", "")
+    chatwoot_api_access_token: str = os.getenv("CHATWOOT_API_ACCESS_TOKEN", "").strip().strip('"').strip("'")
     chatwoot_account_id: int = int(os.getenv("CHATWOOT_ACCOUNT_ID", "1"))
     chatwoot_inbox_id: int = int(os.getenv("CHATWOOT_INBOX_ID", "1"))
 
     # OpenWA (Free WhatsApp Gateway)
     openwa_base_url: str = os.getenv("OPENWA_BASE_URL", "http://openwa:2785").rstrip("/")
-    openwa_api_key: str = os.getenv("OPENWA_API_KEY", "")
-    openwa_session_name: str = os.getenv("OPENWA_SESSION_NAME", "it-support")
+    openwa_api_key: str = os.getenv("OPENWA_API_KEY", "").strip().strip('"').strip("'")
+    openwa_session_name: str = os.getenv("OPENWA_SESSION_NAME", "it-support").strip().strip('"').strip("'")
 
     # Security & Trigger Rules
     bridge_secret_token: str = os.getenv("BRIDGE_SECRET_TOKEN", "secure_bridge_webhook_token_998877")
