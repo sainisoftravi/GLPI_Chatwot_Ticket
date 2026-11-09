@@ -5,6 +5,8 @@ networks:
 volumes:
   glpi_db_data:
   glpi_data:
+  glpi_plugins:
+  glpi_marketplace:
   chatwoot_pg_data:
   chatwoot_redis_data:
   chatwoot_storage:
@@ -46,6 +48,8 @@ services:
       GLPI_CRONTAB_ENABLED: "true"
     volumes:
       - glpi_data:/var/glpi
+      - glpi_plugins:/var/www/glpi/plugins
+      - glpi_marketplace:/var/www/glpi/marketplace
     networks:
       - it-network
 
