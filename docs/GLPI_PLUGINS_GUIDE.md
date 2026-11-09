@@ -11,6 +11,33 @@ We have updated `docker-compose.yml` to persist both `glpi_plugins` and `glpi_ma
 > [!NOTE] 
 > **GLPI v10+ Native Webhooks:** In GLPI 10+, **Webhooks are built-in natively**! You do not need to install an external webhook plugin. Look at your left menu under **Setup** > **Webhooks** to configure outbound webhooks.
 
+---
+
+## ⚠️ Warning: "Your GLPI Network registration is not valid" (Marketplace)
+
+Starting in GLPI 10, the online **Marketplace** tab prompts for a GLPI Network registration key. 
+
+You have **two simple options**:
+
+### Option A: Use the Free "Plugins" Tab (No Key Required - Recommended)
+You do **not** need any GLPI Network registration to use community plugins!
+1. In the top right header, click the **Plugins** button (next to Marketplace) or go directly to:
+   `http://<SERVER_IP>:8085/front/plugin.php`
+2. All plugins installed via our script or placed in `/var/www/glpi/plugins` appear here immediately.
+3. You can click **Install** and **Enable** with 1 click without entering any registration key!
+
+> **Tip - Make Plugins View Default**:
+> Go to **Setup** > **General** > **General setup** tab > Set **"Enable the marketplace"** to **No** (or **"Show new plugins in marketplace"** to **No**). Now clicking **Setup > Plugins** will always open the clean, standard Plugins list directly.
+
+### Option B: Get a 100% Free GLPI Network Key
+If you prefer browsing the online catalog directly inside the Marketplace tab:
+1. Register for free at: [services.glpi-network.com](https://services.glpi-network.com/)
+2. In your GLPI Network dashboard, copy your free **Registration Key**.
+3. In GLPI, navigate to **Setup** > **General** > **GLPI Network** tab.
+4. Paste the key and click **Save**. The Marketplace will unlock!
+
+---
+
 ## ⚡ Method 1: Fix Web UI Permissions (Install via Browser Marketplace)
 
 To enable 1-click plugin installation from the GLPI Web Marketplace:
