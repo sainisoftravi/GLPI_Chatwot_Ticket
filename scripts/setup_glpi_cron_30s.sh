@@ -76,3 +76,4 @@ echo "   - Task additions & updates"
 echo "   - Ticket responses & followups"
 echo " every 30 seconds in the background via CLI!"
 echo "=========================================================================="
+

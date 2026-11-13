@@ -65,3 +65,4 @@ For GLPI to send emails (SMTP/PHP), ensure your email settings are configured:
 While emails go through GLPI's queued notification system:
 - **WhatsApp Ticket Confirmations**: Dispatched instantly by the **Integration Bridge** (`http://bridge:5000/webhook/openwa`) the moment a `#ticket` is created.
 - **WhatsApp Status Updates**: When a technician solves or updates a ticket, GLPI's native webhook (`Setup > Webhooks` pointing to `http://bridge:5000/webhook/glpi`) triggers an immediate WhatsApp update back to the customer's phone.
+
