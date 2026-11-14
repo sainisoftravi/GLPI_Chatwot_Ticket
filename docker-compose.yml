@@ -53,6 +53,30 @@ services:
     networks:
       - it-network
 
+  glpi-cron:
+    image: glpi/glpi:latest
+    container_name: glpi-cron
+    restart: always
+    depends_on:
+      - glpi
+      - glpi-db
+    environment:
+      TIMEZONE: ${TIMEZONE:-Asia/Kolkata}
+      GLPI_DB_HOST: glpi-db
+      GLPI_DB_PORT: 3306
+      GLPI_DB_NAME: ${MARIADB_DATABASE:-glpidb}
+      GLPI_DB_USER: ${MARIADB_USER:-glpi}
+      GLPI_DB_PASSWORD: ${MARIADB_PASSWORD:-glpi_secure_pwd_123}
+      GLPI_CRONTAB_ENABLED: "false"
+    volumes:
+      - glpi_data:/var/glpi
+      - glpi_plugins:/var/www/glpi/plugins
+      - glpi_marketplace:/var/www/glpi/marketplace
+      - ./scripts/glpi_cron_worker.sh:/usr/local/bin/glpi_cron_worker.sh:ro
+    entrypoint: ["/bin/bash", "/usr/local/bin/glpi_cron_worker.sh"]
+    networks:
+      - it-network
+
   # ========================================================
   # 2. Chatwoot Stack (Live Chat, WhatsApp & AI Engine)
   # ========================================================
