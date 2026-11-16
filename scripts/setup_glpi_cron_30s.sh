@@ -1,15 +1,19 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# Setup GLPI Automated CLI Notifications & Cron (Runs every 30 seconds)
+# Setup GLPI Automated CLI Notifications & Cron (Runs anywhere dynamically)
 # ==============================================================================
 set -e
 
+# Detect deployment root dynamically (works on any directory path / server location)
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(dirname "$SCRIPT_DIR")"
 
 echo "=========================================================================="
 echo " ⚙️ Configuring GLPI Automated CLI Notifications (Every 30s) "
+echo " Target Deployment Directory: $ROOT_DIR"
 echo "=========================================================================="
+
+cd "$ROOT_DIR"
 
 # 1. Load credentials from .env if present
 if [ -f "$ROOT_DIR/.env" ]; then
@@ -21,59 +25,51 @@ DB_USER="${MARIADB_USER:-glpi}"
 DB_PASS="${MARIADB_PASSWORD:-glpi_secure_pwd_123}"
 DB_NAME="${MARIADB_DATABASE:-glpidb}"
 
-echo "[1] Updating GLPI Automatic Actions to CLI Mode in Database..."
-# Set critical background tasks to CLI mode (mode=2), active (state=1), and frequency=30s
+# 2. Ensure scripts have execution permissions
+chmod +x "$SCRIPT_DIR"/*.sh 2>/dev/null || true
+
+# 3. Check if glpi-mariadb container is running
+echo "[1/4] Checking Database Connectivity..."
+if ! docker ps --format '{{.Names}}' | grep -q "glpi-mariadb"; then
+    echo "⚠️ glpi-mariadb container is not running yet. Starting database..."
+    docker compose up -d glpi-db
+    sleep 5
+fi
+
+# 4. Update GLPI database: 0-minute delay and CLI mode for all notification tasks
+echo "[2/4] Updating GLPI Database (0-delay immediate delivery & CLI mode)..."
 docker exec -i glpi-mariadb mariadb -u"$DB_USER" -p"$DB_PASS" "$DB_NAME" <<EOF
+-- Set immediate delivery (0 delay) for all entities
+UPDATE glpi_entities SET delay_send_emails = 0 WHERE delay_send_emails != 0;
+
+-- Set critical tasks to CLI mode (mode=2), active (state=1), and frequency=30s
 UPDATE glpi_crontasks 
 SET mode = 2, frequency = 30, state = 1 
 WHERE name IN ('queuedmail', 'queuednotification', 'mailgate', 'ticket', 'sla', 'createinquestticket');
+
+-- Reset any task stuck in running state
+UPDATE glpi_crontasks SET state = 1 WHERE state = 2;
 EOF
 
-echo "✅ Database updated: Queued emails, notifications, and ticket actions set to CLI (every 30s)!"
+echo "✅ Database updated: delay_send_emails=0 and tasks set to CLI mode (30s)!"
+
+# 5. Launch / Restart glpi-cron background container
+echo "[3/4] Ensuring glpi-cron container is active..."
+docker compose up -d glpi-cron
+
+# 6. Force immediate flush of pending notification queue
+echo "[4/4] Forcing immediate queue flush inside glpi-app..."
+docker exec -u www-data glpi-app php /var/www/glpi/front/cron.php --force queuednotification || true
+docker exec -u www-data glpi-app php /var/www/glpi/front/cron.php 10 || true
 
 echo ""
-echo "[2] Current GLPI Notification Crontask Configuration:"
+echo "Current Pending Email Queue Count:"
 docker exec -i glpi-mariadb mariadb -u"$DB_USER" -p"$DB_PASS" "$DB_NAME" -e "
-SELECT name, 
-       CASE mode WHEN 1 THEN 'GLPI (Web)' WHEN 2 THEN 'CLI (Cron)' ELSE 'Other' END AS 'Run Mode',
-       frequency AS 'Frequency (sec)',
-       CASE state WHEN 1 THEN 'Scheduled' WHEN 2 THEN 'Running' ELSE 'Disabled' END AS 'State',
-       lastrun AS 'Last Run'
-FROM glpi_crontasks 
-WHERE name IN ('queuedmail', 'queuednotification', 'mailgate', 'ticket', 'sla');
+SELECT count(*) AS 'Pending Emails In Queue' FROM glpi_queuednotifications;
 "
 
-echo ""
-echo "[3] Testing GLPI CLI Cron execution inside container..."
-docker exec -u www-data glpi-app php /var/www/glpi/bin/console cron:run --force 2>/dev/null || \
-docker exec -u www-data glpi-app php /var/www/glpi/front/cron.php 2>/dev/null || true
-echo "✅ Test execution completed successfully."
-
-echo ""
-echo "[4] Installing 30-Second Host Cron Job in /etc/cron.d/glpi-cron..."
-CRON_FILE="/etc/cron.d/glpi-cron"
-
-sudo tee "$CRON_FILE" > /dev/null <<'EOF'
-# ==============================================================================
-# GLPI Automated CLI Cron: Processes ticket notifications, tasks & emails every 30s
-# ==============================================================================
-SHELL=/bin/bash
-PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
-
-* * * * * root docker exec -u www-data glpi-app php /var/www/glpi/front/cron.php >/dev/null 2>&1
-* * * * * root sleep 30; docker exec -u www-data glpi-app php /var/www/glpi/front/cron.php >/dev/null 2>&1
-EOF
-
-sudo chmod 0644 "$CRON_FILE"
-echo "✅ Installed host cron job at $CRON_FILE."
-
-echo ""
 echo "=========================================================================="
-echo " 🎉 Configuration Complete! "
-echo " GLPI will now automatically process and send:"
-echo "   - Ticket creation notifications"
-echo "   - Task additions & updates"
-echo "   - Ticket responses & followups"
-echo " every 30 seconds in the background via CLI!"
+echo " 🎉 Automated Cron Deployment Complete! "
+echo " The glpi-cron container is running permanently in the background."
+echo " Every ticket, task, or followup will now notify automatically every 30s."
 echo "=========================================================================="
-

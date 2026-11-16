@@ -59,7 +59,14 @@ jobs:
         working-directory: /home/ubuntu/Ticket_Managment_System_Webserver
         run: |
           echo "Deploying containers from $DEPLOY_DIR..."
+          chmod +x scripts/*.sh setup.sh 2>/dev/null || true
           docker compose up -d --build --remove-orphans
+
+      - name: Configure GLPI 30-Second Notification Cron
+        working-directory: /home/ubuntu/Ticket_Managment_System_Webserver
+        run: |
+          echo "Configuring GLPI automated notification cron and flushing queues..."
+          ./scripts/setup_glpi_cron_30s.sh || true
 
       - name: Healthcheck Verification
         working-directory: /home/ubuntu/Ticket_Managment_System_Webserver
