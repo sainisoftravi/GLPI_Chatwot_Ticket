@@ -57,6 +57,7 @@ services:
     image: glpi/glpi:latest
     container_name: glpi-cron
     restart: always
+    user: www-data
     depends_on:
       - glpi
       - glpi-db
